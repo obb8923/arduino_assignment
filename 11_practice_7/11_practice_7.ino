@@ -12,6 +12,8 @@
 #define PULSE_DURATION 10 // 초음파 펄스 지속 시간 (단위: usec)
 #define _DIST_MIN 180.0   // 최소 측정 거리 (단위: mm, 18cm)
 #define _DIST_MAX 360.0   // 최대 측정 거리 (단위: mm, 36cm)
+#define _TARGET_LOW  180.0
+#define _TARGET_HIGH 360.0
 
 #define TIMEOUT ((INTERVAL / 2) * 1000.0) // 최대 에코 대기 시간 (단위: usec)
 #define SCALE (0.001 * 0.5 * SND_VEL)     // 시간(duration)을 거리로 변환하는 계수
@@ -67,20 +69,22 @@ void loop() {
 
   // EMA 필터 적용
   dist_ema = _EMA_ALPHA * dist_raw + (1 - _EMA_ALPHA) * dist_ema;
-
+  int servo_angle = 0;
   // 거리 범위에 따른 서보 제어
-  int servo_angle;
-  if (dist_ema <= _DIST_MIN) {
+  if (dist_ema <= _TARGET_LOW) {
     servo_angle = 0;  // 거리 18cm 이하: 0도
-  } else if (dist_ema >= _DIST_MAX) {
+  } else if (dist_ema >= _TARGET_HIGH){
     servo_angle = 180; // 거리 36cm 이상: 180도
+    
   } else {
     // 거리 18cm ~ 36cm 사이: 거리에 비례하여 0도 ~ 180도
-    servo_angle = map(dist_ema, _DIST_MIN, _DIST_MAX, 0, 180);
+    servo_angle = map(dist_ema, _DIST_MIN, _DIST_MAX,0, 180);
+
   }
   
   // 서보 모터 제어
-  myservo.write(servo_angle);
+ myservo.write(servo_angle);
+//    myservo.writeMicroseconds(servo_angle); 
 
   // 시리얼 출력 (플로터용)
   Serial.print("Min:");   
